@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Panel finansowy i projektowy</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+</head>
+<body>
+    <header>
+        <h1>Panel zarządzania finansami i projektami</h1>
+        <p>Wykorzystaj moduły do kalkulacji kosztów firmy, przygotowania ofert, planowania projektów i wystawiania faktur.</p>
+    </header>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-container">
+        {% for category, message in messages %}
+        <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <main>
+        <section id="company-costs">
+            <h2>Koszty firmy</h2>
+            <div class="summary-grid">
+                <div>
+                    <h3>Miesięczny koszt firmy</h3>
+                    <p class="highlight">{{ company_summary.monthly_total | round(2) }} PLN</p>
+                    <ul>
+                        <li>Pracownicy: {{ company_summary.employee_costs | round(2) }} PLN</li>
+                        <li>Biuro: {{ company_summary.office_costs | round(2) }} PLN</li>
+                        <li>Koszty dodatkowe: {{ company_summary.additional_costs | round(2) }} PLN</li>
+                        <li>Leasingi (odliczane): {{ company_summary.leasing_costs | round(2) }} PLN</li>
+                        <li>Zarząd: {{ company_summary.board_costs | round(2) }} PLN</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3>Dostępne roboczogodziny</h3>
+                    <p>Przy założeniu {{ hours_per_week }} godzin tygodniowo na pracownika:</p>
+                    <p class="highlight">{{ company_summary.available_hours | round(2) }} h / miesiąc</p>
+                    <p>Stawka bazowa roboczogodziny:</p>
+                    {% if company_summary.hourly_rate %}
+                    <p class="highlight">{{ company_summary.hourly_rate | round(2) }} PLN</p>
+                    {% else %}
+                    <p class="highlight">Dodaj pracowników, aby wyliczyć stawkę</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="data-columns">
+                <div>
+                    <h3>Pracownicy (UoP)</h3>
+                    {% if company_data.employees %}
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Imię i nazwisko</th>
+                                <th>Netto</th>
+                                <th>Brutto</th>
+                                <th>Składniki</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for employee in company_data.employees %}
+                            <tr>
+                                <td>{{ employee.name }}</td>
+                                <td>{{ employee.net_salary }}</td>
+                                <td>{{ employee.gross_salary }}</td>
+                                <td>
+                                    <ul>
+                                        {% for comp_name, comp_value in employee.salary_components.items() %}
+                                        <li>{{ comp_name }}: {{ comp_value }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <p>Brak pracowników.</p>
+                    {% endif %}
+
+                    <form method="post" action="{{ url_for('add_employee') }}" class="card">
+                        <input type="hidden" name="project_id" value="{{ selected_project_id }}" />
+                        <h4>Dodaj pracownika</h4>
+                        <label>Imię i nazwisko
+                            <input type="text" name="name" required />
+                        </label>
+                        <label>Pensja netto (PLN)
+                            <input type="number" step="0.01" name="net_salary" required />
+                        </label>
+                        <label>Pensja brutto (PLN)
+                            <input type="number" step="0.01" name="gross_salary" required />
+                        </label>
+                        <label>Składniki (format: "nazwa:kwota" w oddzielnych liniach)
+                            <textarea name="components" rows="3" placeholder="wynagrodzenie:7500\npremia:1500"></textarea>
+                        </label>
+                        <button type="submit">Dodaj pracownika</button>
+                    </form>
+                </div>
+
+                <div>
+                    <h3>Kategorie kosztów</h3>
+                    <div class="stack">
+                        <div class="card">
+                            <h4>Dodaj koszt biura</h4>
+                            <form method="post" action="{{ url_for('add_office_cost') }}">
+                                <input type="hidden" name="project_id" value="{{ selected_project_id }}" />
+                                <label>Opis
+                                    <input type="text" name="description" required />
+                                </label>
+                                <label>Kategoria
+                                    <input type="text" name="category" placeholder="czynsz, media..." required />
+                                </label>
+                                <label>Kwota (PLN)
+                                    <input type="number" step="0.01" name="amount" required />
+                                </label>
+                                <button type="submit">Dodaj koszt biura</button>
+                            </form>
+                        </div>
+                        <div class="card">
+                            <h4>Dodaj koszt dodatkowy</h4>
+                            <form method="post" action="{{ url_for('add_additional_cost') }}">
+                                <input type="hidden" name="project_id" value="{{ selected_project_id }}" />
+                                <label>Opis
+                                    <input type="text" name="description" required />
+                                </label>
+                                <label>Kwota (PLN)
+                                    <input type="number" step="0.01" name="amount" required />
+                                </label>
+                                <button type="submit">Dodaj koszt</button>
+                            </form>
+                        </div>
+                        <div class="card">
+                            <h4>Dodaj leasing</h4>
+                            <form method="post" action="{{ url_for('add_leasing_cost') }}">
+                                <input type="hidden" name="project_id" value="{{ selected_project_id }}" />
+                                <label>Opis
+                                    <input type="text" name="description" required />
+                                </label>
+                                <label>Kwota (PLN)
+                                    <input type="number" step="0.01" name="amount" required />
+                                </label>
+                                <label>Odliczenie podatkowe
+                                    <select name="deductible_ratio">
+                                        <option value="0.5">50%</option>
+                                        <option value="1.0">100%</option>
+                                    </select>
+                                </label>
+                                <button type="submit">Dodaj leasing</button>
+                            </form>
+                        </div>
+                        <div class="card">
+                            <h4>Dodaj wynagrodzenie zarządu</h4>
+                            <form method="post" action="{{ url_for('add_board_member') }}">
+                                <input type="hidden" name="project_id" value="{{ selected_project_id }}" />
+                                <label>Imię i nazwisko
+                                    <input type="text" name="name" required />
+                                </label>
+                                <label>Pensja brutto (mies.)
+                                    <input type="number" step="0.01" name="gross_salary" required />
+                                </label>
+                                <label>Składki ZUS (mies.)
+                                    <input type="number" step="0.01" name="social_security" required />
+                                </label>
+                                <label>Ubezpieczenie zdrowotne (mies.)
+                                    <input type="number" step="0.01" name="health_insurance" required />
+                                </label>
+                                <button type="submit">Dodaj członka zarządu</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="offer">
+            <h2>Moduł ofertowania</h2>
+            {% if company_summary.hourly_rate %}
+            <p>Aktualna bazowa stawka roboczogodziny: <strong>{{ company_summary.hourly_rate | round(2) }} PLN</strong></p>
+            {% else %}
+            <p>Dodaj pracowników, aby wyliczyć stawkę roboczogodziny.</p>
+            {% endif %}
+
+            <form method="post" action="{{ url_for('calculate_offer') }}" class="card">
+                <input type="hidden" name="project_id" value="{{ selected_project_id }}" />
+                <div class="grid">
+                    <label>Roboczogodziny
+                        <input type="number" step="0.1" name="hours" required />
+                    </label>
+                    <label>Koszt materiałów (PLN)
+                        <input type="number" step="0.01" name="material_cost" required />
+                    </label>
+                    <label>Marża na materiał (%)
+                        <input type="number" step="0.1" name="material_margin_pct" value="0" />
+                    </label>
+                    <label>Marża na roboczogodzinę (%)
+                        <input type="number" step="0.1" name="hourly_margin_pct" value="0" />
+                    </label>
+                    <label>Godziny 200%
+                        <input type="number" step="0.1" name="double_time_hours" value="0" />
+                    </label>
+                    <label>Koszt dojazdu (PLN)
+                        <input type="number" step="0.01" name="travel_cost" value="0" />
+                    </label>
+                    <label>Koszt hotelu (PLN)
+                        <input type="number" step="0.01" name="hotel_cost" value="0" />
+                    </label>
+                    <label>Diety (PLN)
+                        <input type="number" step="0.01" name="per_diem_cost" value="0" />
+                    </label>
+                    <label>Roboczogodziny / tydzień (na pracownika)
+                        <input type="number" step="0.1" name="hours_per_week" value="{{ hours_per_week }}" />
+                    </label>
+                </div>
+                <button type="submit">Wylicz ofertę</button>
+            </form>
+
+            {% if offer %}
+            <div class="offer-results">
+                <h3>Podsumowanie oferty</h3>
+                <div class="summary-grid">
+                    <div>
+                        <ul>
+                            <li>Roboczogodziny: {{ offer.hours }}</li>
+                            <li>Koszt materiałów: {{ offer.material_cost | round(2) }} PLN</li>
+                            <li>Marża materiałowa: {{ offer.material_margin_amount | round(2) }} PLN</li>
+                            <li>Marża na roboczogodzinie: {{ offer.hourly_margin_amount | round(2) }} PLN</li>
+                            <li>Godziny 200%: {{ offer.double_time_hours }} (koszt {{ offer.double_time_cost | round(2) }} PLN)</li>
+                            <li>Dojazd / Hotel / Diety: {{ offer.travel_cost | round(2) }} / {{ offer.hotel_cost | round(2) }} / {{ offer.per_diem_cost | round(2) }} PLN</li>
+                            <li>Łączny koszt oferty: <strong>{{ offer.total_cost | round(2) }} PLN</strong></li>
+                            <li>Zysk: <strong>{{ offer.profit | round(2) }} PLN</strong></li>
+                        </ul>
+                    </div>
+                    {% if offer_chart %}
+                    <div>
+                        <img src="{{ url_for('static', filename=offer_chart) }}" alt="Wykres struktury oferty" />
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </section>
+
+                        <section id="project">
+            <h2>Moduł projektowy</h2>
+            <div class="project-controls">
+                {% if projects %}
+                <form method="get" action="{{ url_for('index') }}" class="card inline">
+                    <label>Wybrany projekt
+                        <select name="project_id" onchange="this.form.submit()">
+                            {% for item in projects %}
+                            <option value="{{ item.id }}" {% if item.id == selected_project_id %}selected{% endif %}>{{ item.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                </form>
+                {% endif %}
+                <form method="post" action="{{ url_for('create_project') }}" class="card inline">
+                    <label>Nowy projekt
+                        <input type="text" name="name" placeholder="Nazwa projektu" required />
+                    </label>
+                    <button type="submit">Utwórz projekt</button>
+                </form>
+            </div>
+
+            {% if project %}
+            <form method="post" action="{{ url_for('update_project_name') }}" class="card inline">
+                <input type="hidden" name="project_id" value="{{ selected_project_id }}" />
+                <label>Nazwa projektu
+                    <input type="text" name="project_name" value="{{ project.project_name }}" required />
+                </label>
+                <button type="submit">Zapisz nazwę projektu</button>
+            </form>
+
+            <div class="summary-grid">
+                <div>
+                    <h3>Budżet pracowniczy</h3>
+                    <p class="highlight">{{ project.total_employee_budget() | round(2) }} PLN</p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Pracownik</th>
+                                <th>Stawka</th>
+                                <th>Godziny</th>
+                                <th>Koszt</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for assignment in project.employee_assignments %}
+                            <tr>
+                                <td>{{ assignment.employee_name }}</td>
+                                <td>{{ assignment.hourly_rate | round(2) }} PLN</td>
+                                <td>{{ assignment.planned_hours }}</td>
+                                <td>{{ assignment.planned_cost() | round(2) }} PLN</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <form method="post" action="{{ url_for('add_employee_assignment') }}" class="card">
+                        <input type="hidden" name="project_id" value="{{ selected_project_id }}" />
+                        <h4>Dodaj pracownika do projektu</h4>
+                        <label>Imię i nazwisko
+                            <input type="text" name="employee_name" required />
+                        </label>
+                        <label>Stawka (PLN)
+                            <input type="number" step="0.01" name="hourly_rate" required />
+                        </label>
+                        <label>Planowane godziny
+                            <input type="number" step="0.1" name="planned_hours" required />
+                        </label>
+                        <button type="submit">Dodaj</button>
+                    </form>
+                </div>
+                <div>
+                    <h3>Budżet socjalny</h3>
+                    <p class="highlight">{{ project.total_social_budget() | round(2) }} PLN</p>
+                    <form method="post" action="{{ url_for('set_social_budget') }}" class="card">
+                        <input type="hidden" name="project_id" value="{{ selected_project_id }}" />
+                        <label>Noclegi (PLN)
+                            <input type="number" step="0.01" name="hotel_budget" value="{{ project.social_budget.hotel_budget if project.social_budget else '' }}" required />
+                        </label>
+                        <label>Diety (PLN)
+                            <input type="number" step="0.01" name="per_diem_budget" value="{{ project.social_budget.per_diem_budget if project.social_budget else '' }}" required />
+                        </label>
+                        <label>Kontener socjalny (PLN)
+                            <input type="number" step="0.01" name="container_rental_budget" value="{{ project.social_budget.container_rental_budget if project.social_budget else '' }}" required />
+                        </label>
+                        <button type="submit">Zapisz budżet socjalny</button>
+                    </form>
+
+                    <h3>Budżet materiałowy</h3>
+                    <p class="highlight">{{ project.total_material_budget() | round(2) }} PLN</p>
+                    {% if project.material_budget and project.material_budget.items %}
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Pozycja</th>
+                                <th>Kwota</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for name, value in project.material_budget.items.items() %}
+                            <tr>
+                                <td>{{ name }}</td>
+                                <td>{{ value | round(2) }} PLN</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% endif %}
+                    <form method="post" action="{{ url_for('add_material_item') }}" class="card">
+                        <input type="hidden" name="project_id" value="{{ selected_project_id }}" />
+                        <h4>Dodaj materiał</h4>
+                        <label>Nazwa
+                            <input type="text" name="item_name" required />
+                        </label>
+                        <label>Koszt (PLN)
+                            <input type="number" step="0.01" name="item_cost" required />
+                        </label>
+                        <button type="submit">Dodaj materiał</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="acceptance">
+                <h3>Protokoły odbioru</h3>
+                {% if project.acceptance_protocols %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Numer</th>
+                            <th>Zakres</th>
+                            <th>Data</th>
+                            <th>Kwota</th>
+                            <th>Typ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for protocol in project.acceptance_protocols %}
+                        <tr>
+                            <td>{{ protocol.protocol_number }}</td>
+                            <td>{{ protocol.accepted_scope }}</td>
+                            <td>{{ protocol.date_signed.strftime('%Y-%m-%d') }}</td>
+                            <td>{{ protocol.value | round(2) }} PLN</td>
+                            <td>{{ 'Częściowy' if protocol.partial else 'Końcowy' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p>Brak protokołów odbioru.</p>
+                {% endif %}
+
+                <form method="post" action="{{ url_for('add_acceptance_protocol') }}" class="card">
+                    <input type="hidden" name="project_id" value="{{ selected_project_id }}" />
+                    <h4>Dodaj protokół odbioru</h4>
+                    <label>Numer protokołu
+                        <input type="text" name="protocol_number" required />
+                    </label>
+                    <label>Zakres prac
+                        <input type="text" name="accepted_scope" required />
+                    </label>
+                    <label>Data podpisania
+                        <input type="date" name="date_signed" required />
+                    </label>
+                    <label>Wartość (PLN)
+                        <input type="number" step="0.01" name="value" required />
+                    </label>
+                    <label>Typ protokołu
+                        <select name="partial">
+                            <option value="true">Częściowy</option>
+                            <option value="false">Końcowy</option>
+                        </select>
+                    </label>
+                    <button type="submit">Dodaj protokół</button>
+                </form>
+            </div>
+            {% else %}
+            <p>Dodaj projekt, aby rozpocząć planowanie budżetu i protokołów.</p>
+            {% endif %}
+        </section>
+
+
+
+        <section id="invoicing">
+            <h2>Moduł fakturowania</h2>
+            <div class="summary-grid">
+                <div>
+                    <h3>Dane wystawcy</h3>
+                    {% if invoice_data.issuer %}
+                    <ul>
+                        <li>{{ invoice_data.issuer.name }}</li>
+                        <li>{{ invoice_data.issuer.address }}</li>
+                        <li>NIP: {{ invoice_data.issuer.nip }}</li>
+                        <li>Rachunek: {{ invoice_data.issuer.bank_account }}</li>
+                    </ul>
+                    {% else %}
+                    <p>Uzupełnij dane wystawcy faktury.</p>
+                    {% endif %}
+                    <form method="post" action="{{ url_for('set_invoice_issuer') }}" class="card">
+                        <input type="hidden" name="project_id" value="{{ selected_project_id }}" />
+                        <h4>Ustaw wystawcę</h4>
+                        <label>Nazwa
+                            <input type="text" name="name" value="{{ invoice_data.issuer.name if invoice_data.issuer else '' }}" required />
+                        </label>
+                        <label>Adres
+                            <input type="text" name="address" value="{{ invoice_data.issuer.address if invoice_data.issuer else '' }}" required />
+                        </label>
+                        <label>NIP
+                            <input type="text" name="nip" value="{{ invoice_data.issuer.nip if invoice_data.issuer else '' }}" required />
+                        </label>
+                        <label>Rachunek bankowy
+                            <input type="text" name="bank_account" value="{{ invoice_data.issuer.bank_account if invoice_data.issuer else '' }}" required />
+                        </label>
+                        <button type="submit">Zapisz wystawcę</button>
+                    </form>
+                </div>
+                <div>
+                    <h3>Generowanie faktury</h3>
+                    {% if not project %}
+                    <p>Wybierz projekt, aby wystawić fakturę.</p>
+                    {% elif project.acceptance_protocols %}
+                    <form method="post" action="{{ url_for('generate_invoice') }}" class="card">
+                        <input type="hidden" name="project_id" value="{{ selected_project_id }}" />
+                        <label>Protokół odbioru
+                            <select name="protocol_number" required>
+                                {% for protocol in project.acceptance_protocols %}
+                                <option value="{{ protocol.protocol_number }}">{{ protocol.protocol_number }} - {{ protocol.accepted_scope }}</option>
+                                {% endfor %}
+                            </select>
+                        </label>
+                        <label>Odbiorca - nazwa
+                            <input type="text" name="buyer_name" required />
+                        </label>
+                        <label>Odbiorca - adres
+                            <input type="text" name="buyer_address" required />
+                        </label>
+                        <label>Odbiorca - NIP
+                            <input type="text" name="buyer_nip" required />
+                        </label>
+                        <label>Numer faktury
+                            <input type="text" name="invoice_number" required />
+                        </label>
+                        <label>Termin płatności
+                            <input type="text" name="payment_terms" value="14 dni" required />
+                        </label>
+                        <label>Stawka VAT (%)
+                            <input type="number" step="0.1" name="tax_rate" value="23" required />
+                        </label>
+                        <button type="submit">Wystaw fakturę</button>
+                    </form>
+                    {% else %}
+                    <p>Aby wystawić fakturę dodaj co najmniej jeden protokół odbioru.</p>
+                    {% endif %}
+
+                    {% if invoice_data.invoice %}
+                    <div class="card invoice-summary">
+                        <h4>Ostatnia faktura</h4>
+                        <p>Numer: {{ invoice_data.invoice.number }}</p>
+                        <p>Data wystawienia: {{ invoice_data.invoice.issue_date.strftime('%Y-%m-%d') }}</p>
+                        <p>Nabywca: {{ invoice_data.invoice.buyer.name }} (NIP {{ invoice_data.invoice.buyer.nip }})</p>
+                        <p>Netto: {{ invoice_data.invoice.total_net() | round(2) }} PLN</p>
+                        <p>VAT: {{ invoice_data.invoice.total_tax() | round(2) }} PLN</p>
+                        <p>Brutto: {{ invoice_data.invoice.total_gross() | round(2) }} PLN</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer>
+        <p>Moduły Python: zarządzanie kosztami firmy, ofertowaniem, projektami oraz fakturowaniem.</p>
+    </footer>
+</body>
+</html>
