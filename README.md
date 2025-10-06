@@ -1,90 +1,138 @@
-# Welcome to GitHub
+# Finance and Project Management Toolkit
 
-Welcome to GitHub—where millions of developers work together on software. Ready to get started? Let’s learn how this all works by building and publishing your first GitHub Pages website!
+This repository provides a Python-based toolkit for managing company finances, creating offers, planning project budgets and issuing invoices zgodnie z polskimi przepisami. Narzędzie jest oparte na kilku modułach, które można wykorzystać w aplikacji webowej, narzędziu CLI lub we własnych skryptach automatyzujących.
 
-## Repositories
+## Wymagania
 
-Right now, we’re in your first GitHub **repository**. A repository is like a folder or storage space for your project. Your project's repository contains all its files such as code, documentation, images, and more. It also tracks every change that you—or your collaborators—make to each file, so you can always go back to previous versions of your project if you make any mistakes.
+* Python 3.10+
+* `matplotlib` do generowania wykresów (instalacja: `pip install matplotlib`).
 
-This repository contains three important files: The HTML code for your first website on GitHub, the CSS stylesheet that decorates your website with colors and fonts, and the **README** file. It also contains an image folder, with one image file.
+## Struktura modułów
 
-## Describe your project
+### Moduł kosztów firmy (`finance_app.company_costs`)
 
-You are currently viewing your project's **README** file. **_README_** files are like cover pages or elevator pitches for your project. They are written in plain text or [Markdown language](https://guides.github.com/features/mastering-markdown/), and usually include a paragraph describing the project, directions on how to use it, who authored it, and more.
+* **Pracownicy na umowę o pracę** – przechowuje dane brutto/netto oraz składowe wynagrodzeń.
+* **Koszty utrzymania biura** – rejestruje faktury za czynsz, media, artykuły biurowe itd.
+* **Koszty dodatkowe** – np. ubezpieczenia firmy.
+* **Koszty leasingów** – obsługuje podział kosztów na część 50% i 100% kosztów uzyskania przychodu.
+* **Wynagrodzenia zarządu** – wraz z wyliczeniem podatku dochodowego według polskiej skali podatkowej.
+* **Funkcja roboczogodziny** – oblicza koszt roboczogodziny przy założeniu np. 80 roboczogodzin tygodniowo na pracownika.
 
-[Learn more about READMEs](https://help.github.com/en/articles/about-readmes)
+### Moduł ofertowania (`finance_app.offer_module`)
 
-## Your first website
+* Oblicza cenę roboczogodziny na podstawie kosztów firmy.
+* Wycenia projekty uwzględniając liczbę roboczogodzin i koszt materiałów.
+* Dodaje marżę do materiałów oraz do roboczogodziny.
+* Wspiera dni płatne 200% stawki (double time).
+* Dodaje koszty dojazdu, hotelu oraz diety.
+* Wizualizuje strukturę oferty na wykresie kołowym (marża, koszty, zysk).
 
-**GitHub Pages** is a free and easy way to create a website using the code that lives in your GitHub repositories. You can use GitHub Pages to build a portfolio of your work, create a personal website, or share a fun project that you coded with the world. GitHub Pages is automatically enabled in this repository, but when you create new repositories in the future, the steps to launch a GitHub Pages website will be slightly different.
+### Moduł projektowy (`finance_app.project_module`)
 
-[Learn more about GitHub Pages](https://pages.github.com/)
+* **Budżet pracowniczy** – przydziela pracowników i kontroluje planowany koszt.
+* **Budżet socjalny** – planuje koszty noclegów, diet i kontenera socjalnego.
+* **Budżet materiałowy** – przechowuje i sumuje koszty materiałów.
+* **Protokoły odbioru** – obsługuje protokoły odbioru prac częściowych i całościowych.
 
-## Rename this repository to publish your site
+### Moduł fakturowania (`finance_app.invoicing`)
 
-We've already set-up a GitHub Pages website for you, based on your personal username. This repository is called `hello-world`, but you'll rename it to: `username.github.io`, to match your website's URL address. If the first part of the repository doesn’t exactly match your username, it won’t work, so make sure to get it right.
+* Generuje faktury na podstawie protokołów odbioru.
+* Zawiera dane wystawcy, nabywcy, numer NIP, rachunek bankowy, terminy płatności.
+* Sumuje kwoty netto, VAT i brutto.
 
-Let's get started! To update this repository’s name, click the `Settings` tab on this page. This will take you to your repository’s settings page. 
+## Interfejs webowy
 
-![repo-settings-image](https://user-images.githubusercontent.com/18093541/63130482-99e6ad80-bf88-11e9-99a1-d3cf1660b47e.png)
+Dla wygodniejszej pracy przygotowany został prosty interfejs webowy w oparciu o Flask. Pozwala on zarządzać wszystkimi modułami: kosztami firmy, ofertowaniem, budżetem projektu oraz fakturowaniem.
 
-Under the **Repository Name** heading, type: `username.github.io`, where username is your username on GitHub. Then click **Rename**—and that’s it. When you’re done, click your repository name or browser’s back button to return to this page.
+### Szybki start
 
-<img width="1039" alt="rename_screenshot" src="https://user-images.githubusercontent.com/18093541/63129466-956cc580-bf85-11e9-92d8-b028dd483fa5.png">
+1. Sklonuj repozytorium lub pobierz przygotowane archiwum (`dist/finance_app_bundle.zip`).
+2. Uruchom skrypt bootstrapujący, aby zainstalować zależności w wirtualnym środowisku:
 
-Once you click **Rename**, your website will automatically be published at: https://your-username.github.io/. The HTML file—called `index.html`—is rendered as the home page and you'll be making changes to this file in the next step.
+   **Linux / macOS**
 
-Congratulations! You just launched your first GitHub Pages website. It's now live to share with the entire world
+   ```bash
+   bash scripts/bootstrap.sh
+   source .venv/bin/activate
+   ```
 
-## Making your first edit
+   **Windows (PowerShell)**
 
-When you make any change to any file in your project, you’re making a **commit**. If you fix a typo, update a filename, or edit your code, you can add it to GitHub as a commit. Your commits represent your project’s entire history—and they’re all saved in your project’s repository.
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File scripts/bootstrap.ps1
+   .\.venv\Scripts\activate
+   ```
 
-With each commit, you have the opportunity to write a **commit message**, a short, meaningful comment describing the change you’re making to a file. So you always know exactly what changed, no matter when you return to a commit.
+3. Uruchom interfejs webowy:
 
-## Practice: Customize your first GitHub website by writing HTML code
+   ```bash
+   flask --app app run
+   ```
 
-Want to edit the site you just published? Let’s practice commits by introducing yourself in your `index.html` file. Don’t worry about getting it right the first time—you can always build on your introduction later.
+### Uruchomienie
 
-Let’s start with this template:
-
+```bash
+pip install -r requirements.txt
+flask --app app run
 ```
-<p>Hello World! I’m [username]. This is my website!</p>
+
+Po uruchomieniu aplikacja będzie dostępna pod adresem [http://localhost:5000](http://localhost:5000). Wszystkie dane przechowywane są w pamięci, dlatego po restarcie serwera zaczynasz z pustym zestawem.
+
+### Jak pobrać i uruchomić program w Windows
+
+1. **Zainstaluj Pythona 3.10+** z [python.org](https://www.python.org/downloads/windows/) i podczas instalacji zaznacz opcję *Add Python to PATH*.
+2. **Pobierz kod źródłowy**:
+   * jeśli masz zainstalowanego gita – uruchom w PowerShellu polecenie `git clone <adres_repozytorium>` i przejdź do katalogu projektu (`cd hello-world`),
+   * w przeciwnym razie pobierz archiwum `.zip` wygenerowane poleceniem `python scripts/prepare_bundle.py` (dostępne w katalogu `dist/finance_app_bundle.zip`) i rozpakuj je w wybranym katalogu.
+3. **Otwórz PowerShell w katalogu projektu** (Shift + PPM → „Otwórz okno PowerShell tutaj” lub poleceniem `cd`).
+4. **Uruchom skrypt bootstrapujący** tworzący wirtualne środowisko i instalujący wymagane pakiety:
+
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File scripts/bootstrap.ps1
+   ```
+
+   Skrypt utworzy katalog `.venv` i zainstaluje pakiety z `requirements.txt`.
+5. **Aktywuj wirtualne środowisko**:
+
+   ```powershell
+   .\.venv\Scripts\activate
+   ```
+
+6. **Uruchom aplikację webową**:
+
+   ```powershell
+   flask --app app run
+   ```
+
+   Po chwili aplikacja będzie dostępna pod adresem `http://localhost:5000`. Zatrzymasz ją skrótem `Ctrl+C` w tym samym oknie.
+7. (Opcjonalnie) **Uruchom przykładowy scenariusz CLI**:
+
+   ```powershell
+   python example_usage.py
+   ```
+
+   Skrypt wygeneruje przykładowy wykres w katalogu `images/`.
+
+### Przygotowanie paczki do pobrania
+
+Aby przygotować archiwum `.zip` z kompletem plików (kod źródłowy, szablony, statyczne zasoby oraz skrypty uruchomieniowe), użyj:
+
+```bash
+python scripts/prepare_bundle.py
 ```
 
-To add your introduction, copy our template and click the edit pencil icon at the top right hand corner of the `index.html` file.
+Archiwum trafi do katalogu `dist/`. Można je udostępnić użytkownikom, którzy po rozpakowaniu wykonują kroki z sekcji „Szybki start”.
 
-<img width="997" alt="edit-this-file" src="https://user-images.githubusercontent.com/18093541/63131820-0794d880-bf8d-11e9-8b3d-c096355e9389.png">
+## Przykład użycia modułów w Pythonie
 
+Plik `example_usage.py` nadal pokazuje kompletny przepływ od konfiguracji kosztów firmy, poprzez przygotowanie oferty, plan projektu aż do wystawienia faktury.
 
-Delete this placeholder line:
-
+```bash
+python example_usage.py
 ```
-<p>Welcome to your first GitHub Pages website!</p>
-```
 
-Then, paste the template to line 15 and fill in the blanks.
+Skrypt wypisze kluczowe wartości i zapisze wykres struktury oferty w katalogu `images/`.
 
-<img width="1032" alt="edit-githuboctocat-index" src="https://user-images.githubusercontent.com/18093541/63132339-c3a2d300-bf8e-11e9-8222-59c2702f6c42.png">
+## Dalsze kroki
 
-
-When you’re done, scroll down to the `Commit changes` section near the bottom of the edit page. Add a short message explaining your change, like "Add my introduction", then click `Commit changes`.
-
-
-<img width="1030" alt="add-my-username" src="https://user-images.githubusercontent.com/18093541/63131801-efbd5480-bf8c-11e9-9806-89273f027d16.png">
-
-Once you click `Commit changes`, your changes will automatically be published on your GitHub Pages website. Refresh the page to see your new changes live in action.
-
-:tada: You just made your first commit! :tada:
-
-## Extra Credit: Keep on building!
-
-Change the placeholder Octocat gif on your GitHub Pages website by [creating your own personal Octocat emoji](https://myoctocat.com/build-your-octocat/) or [choose a different Octocat gif from our logo library here](https://octodex.github.com/). Add that image to line 12 of your `index.html` file, in place of the `<img src=` link.
-
-Want to add even more code and fun styles to your GitHub Pages website? [Follow these instructions](https://github.com/github/personal-website) to build a fully-fledged static website.
-
-![octocat](./images/create-octocat.png)
-
-## Everything you need to know about GitHub
-
-Getting started is the hardest part. If there’s anything you’d like to know as you get started with GitHub, try searching [GitHub Help](https://help.github.com). Our documentation has tutorials on everything from changing your repository settings to configuring GitHub from your command line.
+Moduły są przygotowane do dalszej rozbudowy – można je zintegrować z bazą danych, rozbudowanym interfejsem webowym lub narzędziami raportującymi.
