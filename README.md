@@ -6,6 +6,7 @@ This repository provides a Python-based toolkit for managing company finances, c
 
 * Python 3.10+
 * `matplotlib` do generowania wykresów (instalacja: `pip install matplotlib`).
+* `SQLAlchemy` do obsługi bazy danych SQLite.
 
 ## Struktura modułów
 
@@ -63,7 +64,7 @@ Dla wygodniejszej pracy przygotowany został prosty interfejs webowy w oparciu o
    .\.venv\Scripts\activate
    ```
 
-3. Uruchom interfejs webowy:
+3. Uruchom interfejs webowy (domyślna baza zostanie utworzona jako plik `finance_app.db` w katalogu projektu):
 
    ```bash
    flask --app app run
@@ -76,7 +77,23 @@ pip install -r requirements.txt
 flask --app app run
 ```
 
-Po uruchomieniu aplikacja będzie dostępna pod adresem [http://localhost:5000](http://localhost:5000). Wszystkie dane przechowywane są w pamięci, dlatego po restarcie serwera zaczynasz z pustym zestawem.
+Po uruchomieniu aplikacja będzie dostępna pod adresem [http://localhost:5000](http://localhost:5000). Dane są przechowywane w bazie SQLite (`finance_app.db`), dzięki czemu po restarcie serwera zachowujesz konfigurację kosztów, ofert, projektów oraz faktur.
+
+#### Konfiguracja bazy danych
+
+Jeśli chcesz użyć innej lokalizacji lub silnika bazy danych obsługiwanego przez SQLAlchemy, ustaw zmienną środowiskową `FINANCE_APP_DATABASE_URL`, np.:
+
+```bash
+export FINANCE_APP_DATABASE_URL=sqlite:////pełna/ścieżka/do/bazy.db
+```
+
+W przypadku systemu Windows odpowiednio:
+
+```powershell
+$env:FINANCE_APP_DATABASE_URL = 'sqlite:///C:/sciezka/finance_app.db'
+```
+
+Przy pierwszym uruchomieniu aplikacja automatycznie utworzy wymagane tabele.
 
 ### Jak pobrać i uruchomić program w Windows
 
@@ -98,13 +115,13 @@ Po uruchomieniu aplikacja będzie dostępna pod adresem [http://localhost:5000](
    .\.venv\Scripts\activate
    ```
 
-6. **Uruchom aplikację webową**:
+6. **Uruchom aplikację webową** (domyślnie zostanie utworzona baza `finance_app.db` w katalogu projektu):
 
    ```powershell
    flask --app app run
    ```
 
-   Po chwili aplikacja będzie dostępna pod adresem `http://localhost:5000`. Zatrzymasz ją skrótem `Ctrl+C` w tym samym oknie.
+   Po chwili aplikacja będzie dostępna pod adresem `http://localhost:5000`. Dane będą przechowywane w pliku `finance_app.db` w katalogu projektu. Zatrzymasz aplikację skrótem `Ctrl+C` w tym samym oknie.
 7. (Opcjonalnie) **Uruchom przykładowy scenariusz CLI**:
 
    ```powershell
@@ -125,7 +142,7 @@ Archiwum trafi do katalogu `dist/`. Można je udostępnić użytkownikom, którz
 
 ## Przykład użycia modułów w Pythonie
 
-Plik `example_usage.py` nadal pokazuje kompletny przepływ od konfiguracji kosztów firmy, poprzez przygotowanie oferty, plan projektu aż do wystawienia faktury.
+Plik `example_usage.py` pokazuje kompletny przepływ z wykorzystaniem bazy danych – skrypt czyści przykładową bazę `example_usage.db`, dodaje dane firmy, tworzy projekt, zapisuje ofertę oraz fakturę.
 
 ```bash
 python example_usage.py

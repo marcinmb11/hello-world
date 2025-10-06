@@ -103,6 +103,17 @@ section h2 {
     align-items: flex-end;
 }
 
+.project-controls {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+}
+
+.project-controls .card.inline {
+    flex: 1 1 240px;
+}
+
 label {
     display: flex;
     flex-direction: column;
