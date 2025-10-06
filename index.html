@@ -1,18 +1,142 @@
 <!DOCTYPE html>
-
-<html>
+<html lang="pl">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-  <title>my-first-website</title>
-  <LINK href="styles.css" rel="stylesheet" type="text/css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Panel zarządzania firmą</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
-
 <body>
+  <header class="site-header">
+    <div class="header-content">
+      <h1>Panel zarządzania firmą</h1>
+      <p>Zarządzaj kluczowymi kosztami firmy i analizuj wpływ na podatki w jednym miejscu.</p>
+    </div>
+  </header>
 
-<img src="https://octodex.github.com/images/daftpunktocat-thomas.gif" id="octocat" alt="octocat-gif" />
+  <main class="layout">
+    <section class="card">
+      <h2>Leasingi</h2>
+      <p class="section-lead">Dodaj aktywne leasingi i kontroluj koszty podatkowe w zależności od kategorii.</p>
+      <form id="leasing-form" class="form-grid">
+        <label class="field">
+          <span>Opis leasingu</span>
+          <input type="text" id="leasing-description" required placeholder="np. Laptop dla zespołu" />
+        </label>
+        <label class="field">
+          <span>Kategoria</span>
+          <select id="leasing-category" required>
+            <option value="equipment">Sprzęt (100% kosztów)</option>
+            <option value="car_full">Samochód (100% kosztów)</option>
+            <option value="car_half">Samochód (50% kosztów)</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>Miesięczny koszt brutto (PLN)</span>
+          <input type="number" id="leasing-amount" min="0" step="0.01" required placeholder="0.00" />
+        </label>
+        <button type="submit" class="primary-button">Dodaj leasing</button>
+      </form>
 
-<!-- Change this code here by copy and pasting your template on line 15 -->
-<p>Welcome to your first GitHub Pages website!</p>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Opis</th>
+              <th>Kategoria</th>
+              <th>Kwota brutto</th>
+              <th>Kwota kosztowa</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="leasing-table"></tbody>
+        </table>
+      </div>
+    </section>
 
+    <section class="card">
+      <h2>Pracownicy</h2>
+      <p class="section-lead">Wylicz pensję netto według obowiązujących stawek i kontroluj koszt pracodawcy.</p>
+      <form id="employee-form" class="form-grid">
+        <label class="field">
+          <span>Imię i nazwisko</span>
+          <input type="text" id="employee-name" required placeholder="np. Jan Kowalski" />
+        </label>
+        <label class="field">
+          <span>Pensja brutto (PLN)</span>
+          <input type="number" id="employee-gross" min="0" step="0.01" required placeholder="0.00" />
+        </label>
+        <button type="submit" class="primary-button">Dodaj pracownika</button>
+      </form>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Pracownik</th>
+              <th>Brutto</th>
+              <th>Netto</th>
+              <th>Podatek</th>
+              <th>Składki</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="employee-table"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Pozostałe koszty operacyjne</h2>
+      <p class="section-lead">Wprowadź stałe koszty firmy, które wpływają na miesięczny budżet.</p>
+      <form class="form-grid single-column" id="overhead-form">
+        <label class="field">
+          <span>Utrzymanie biura (PLN)</span>
+          <input type="number" id="office-cost" min="0" step="0.01" value="0" />
+        </label>
+        <label class="field">
+          <span>Media (PLN)</span>
+          <input type="number" id="utilities-cost" min="0" step="0.01" value="0" />
+        </label>
+        <label class="field">
+          <span>Koszty zarządu (PLN)</span>
+          <input type="number" id="management-cost" min="0" step="0.01" value="0" />
+        </label>
+      </form>
+    </section>
+
+    <section class="card summary-card">
+      <h2>Podsumowanie miesięczne</h2>
+      <div class="summary-grid">
+        <div class="summary-item">
+          <span class="summary-label">Koszty leasingów</span>
+          <strong id="summary-leasing">0,00 PLN</strong>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">Pensje brutto</span>
+          <strong id="summary-payroll">0,00 PLN</strong>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">Pozostałe koszty</span>
+          <strong id="summary-overheads">0,00 PLN</strong>
+        </div>
+        <div class="summary-item highlight">
+          <span class="summary-label">Łączne koszty</span>
+          <strong id="summary-total">0,00 PLN</strong>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">Koszt podatkowy</span>
+          <strong id="summary-tax-deductible">0,00 PLN</strong>
+        </div>
+      </div>
+      <p class="summary-note">Dane bazują na uproszczonych stawkach podatkowych i składkach ZUS obowiązujących dla umowy o pracę.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>Moduły dodatkowe będą dodawane po testach pierwszej części aplikacji.</p>
+  </footer>
+
+  <script src="app.js"></script>
 </body>
 </html>
